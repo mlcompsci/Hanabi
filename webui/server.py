@@ -442,6 +442,7 @@ class SessionController:
             human_view=human_view,
             log_entries=session.log_entries,
         )
+        payload["session"] = None
         if error is not None:
             payload["error"] = error
         return payload
@@ -470,6 +471,13 @@ class HanabiRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/state":
+            try:
+                self._read_json()
+                self._write_json(self.controller.state())
+            except json.JSONDecodeError as exc:
+                self._write_json(self.controller.state() | {"error": str(exc)}, status=400)
+            return
         if parsed.path == "/api/new-game":
             try:
                 payload = self._read_json()
@@ -483,7 +491,8 @@ class HanabiRequestHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/action":
             try:
                 payload = self._read_json()
-                self._write_json(self.controller.apply_human_action(payload))
+                action_payload = payload.get("action", payload)
+                self._write_json(self.controller.apply_human_action(action_payload))
             except json.JSONDecodeError as exc:
                 self._write_json(self.controller.state() | {"error": str(exc)}, status=400)
             return

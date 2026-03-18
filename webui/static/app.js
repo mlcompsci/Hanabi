@@ -3,6 +3,7 @@ const state = {
   matchPayload: null,
   mode: readStoredMode(),
   tab: readStoredTab(),
+  session: readStoredSession(),
 };
 
 const elements = {
@@ -71,7 +72,12 @@ async function requestJSON(url, options = {}) {
 }
 
 async function loadState() {
-  const payload = await requestJSON("/api/state");
+  const payload = await requestJSON("/api/state", {
+    method: "POST",
+    body: JSON.stringify({
+      session: state.session,
+    }),
+  });
   applyPayload(payload);
 }
 
@@ -103,13 +109,24 @@ async function runAIMatch(event) {
 async function sendAction(payload) {
   const nextState = await requestJSON("/api/action", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      session: state.session,
+      action: payload,
+    }),
   });
   applyPayload(nextState);
 }
 
 function applyPayload(payload) {
   state.payload = payload;
+  if (Object.prototype.hasOwnProperty.call(payload, "session")) {
+    state.session = payload.session;
+    if (state.session) {
+      window.localStorage.setItem("hanabiSession", JSON.stringify(state.session));
+    } else {
+      window.localStorage.removeItem("hanabiSession");
+    }
+  }
   if (payload.status) {
     elements.opponent.value = payload.status.opponent;
   }
@@ -599,6 +616,19 @@ function setTab(tab) {
 function readStoredTab() {
   const stored = window.localStorage.getItem("hanabiUiTab");
   return stored === "match" ? "match" : "human";
+}
+
+function readStoredSession() {
+  const stored = window.localStorage.getItem("hanabiSession");
+  if (!stored) {
+    return null;
+  }
+  try {
+    return JSON.parse(stored);
+  } catch (_error) {
+    window.localStorage.removeItem("hanabiSession");
+    return null;
+  }
 }
 
 elements.newGameForm.addEventListener("submit", (event) => {

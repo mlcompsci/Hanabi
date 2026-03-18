@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/**/*.py": {
+      "maxDuration": 30,
+      "excludeFiles": "{experiments/**,ui/**,webui_server.err.log,webui_server.out.log}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/webui/static/index.html"
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": "/webui/static/$1"
+    }
+  ]
+}

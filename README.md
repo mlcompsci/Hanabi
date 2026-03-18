@@ -135,6 +135,30 @@ python -m webui.server
 
 Then visit `http://127.0.0.1:8000/`.
 
+## Deploying On Vercel
+
+The browser UI is also structured for Vercel deployment using stateless Python API routes under `api/`.
+
+What changed for deployment:
+
+- `api/state.py`, `api/action.py`, `api/new-game/index.py`, and `api/ai-match/index.py` expose Vercel-friendly request handlers.
+- `vercel_backend.py` serializes the full human-play session into JSON so the browser can send it back on the next request instead of relying on a long-lived in-memory server process.
+- `vercel.json` rewrites `/` and `/static/*` to the existing files in `webui/static/`.
+
+Deploy steps:
+
+```bash
+vercel
+```
+
+Or connect the repository in the Vercel dashboard and deploy it as a Python project. The UI remains at the site root, while the game API is served from `/api/*`.
+
+Notes:
+
+- Human-play sessions are client-carried snapshots rather than shared server memory, which makes the app suitable for serverless deployment.
+- AI Match remains request-scoped and does not require persistent storage.
+- Large simulation sweeps should still be run locally, not inside Vercel request handlers.
+
 The scripts also work when invoked by file path from the repository root, for example:
 
 ```bash
