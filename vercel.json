@@ -1,11 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/**/*.py": {
-      "maxDuration": 30,
-      "excludeFiles": "{experiments/**,ui/**,webui_server.err.log,webui_server.out.log}"
-    }
-  },
+  "framework": null,
   "rewrites": [
     {
       "source": "/",
