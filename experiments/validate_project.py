@@ -14,6 +14,7 @@ from hanabi.game import HanabiGame
 from hanabi.mental_state import ResolvedMentalCard
 from hanabi.rules import discard_heuristic_score
 from hanabi.state import ALLOWED_ACTION_KINDS, Action
+from vercel_backend import ai_match_payload, apply_human_action_payload, new_game_payload
 
 
 def make_custom_deck(prefix: list[Card]) -> list[Card]:
@@ -191,6 +192,20 @@ def check_all_pairings() -> None:
         assert 0 <= score <= 25
 
 
+def check_vercel_stateless_flow() -> None:
+    initial = new_game_payload(seed=0, opponent="full")
+    assert initial["session"] is not None
+    legal_actions = initial["controls"]["legal_actions"]
+    assert legal_actions
+    next_payload = apply_human_action_payload(initial["session"], legal_actions[0])
+    assert next_payload["session"] is not None
+    assert next_payload["status"]["turn_number"] > initial["status"]["turn_number"]
+
+    match = ai_match_payload(seed=0, agent_a="outer", agent_b="full")
+    assert match["status"]["game_over"]
+    assert 0 <= match["status"]["score"] <= 25
+
+
 def main() -> None:
     check_action_model_is_limited_to_three_types()
     check_hint_legality()
@@ -200,6 +215,7 @@ def main() -> None:
     check_discard_requires_open_hint_slot()
     check_play_and_discard_update_knowledge()
     check_all_pairings()
+    check_vercel_stateless_flow()
     print("Validation passed: legality, mental-state updates, and all pairings ran successfully.")
 
 
