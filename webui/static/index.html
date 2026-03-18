@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Intentional Hanabi Web UI</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Research Reproduction</p>
+        <h1>Intentional Hanabi</h1>
+        <p class="subtitle">Play 2-player Hanabi in the browser against the paper-style agents and inspect the live heuristic they use.</p>
+        <div class="app-tabs" role="group" aria-label="Application view">
+          <button id="tab-human" type="button" class="mode-button active">Human Play</button>
+          <button id="tab-match" type="button" class="mode-button">AI Match</button>
+        </div>
+        <div id="visibility-controls" class="mode-strip">
+          <div class="mode-toggle" role="group" aria-label="Visibility mode">
+            <button id="mode-normal" type="button" class="mode-button active">Normal</button>
+            <button id="mode-debug" type="button" class="mode-button">Cheat / Debug</button>
+          </div>
+          <span id="debug-badge" class="debug-badge hidden">Cheat / Debug enabled</span>
+        </div>
+      </div>
+      <form id="new-game-form" class="control-panel">
+        <label>
+          Opponent
+          <select id="opponent" name="opponent">
+            <option value="outer">Outer</option>
+            <option value="intentional">Intentional</option>
+            <option value="full" selected>Full</option>
+          </select>
+        </label>
+        <label>
+          Seed
+          <input id="seed" name="seed" type="text" value="0" placeholder="blank = random">
+        </label>
+        <button type="submit">New Game</button>
+      </form>
+      <form id="ai-match-form" class="control-panel hidden">
+        <label>
+          Agent A
+          <select id="match-agent-a" name="match-agent-a">
+            <option value="outer">Outer</option>
+            <option value="intentional">Intentional</option>
+            <option value="full" selected>Full</option>
+          </select>
+        </label>
+        <label>
+          Agent B
+          <select id="match-agent-b" name="match-agent-b">
+            <option value="outer">Outer</option>
+            <option value="intentional">Intentional</option>
+            <option value="full" selected>Full</option>
+          </select>
+        </label>
+        <label>
+          Seed
+          <input id="match-seed" name="match-seed" type="text" value="0" placeholder="blank = random">
+        </label>
+        <button type="submit">Run Match</button>
+      </form>
+    </header>
+
+    <main id="human-layout" class="layout">
+      <section class="panel board-panel">
+        <div class="section-head">
+          <p class="eyebrow">Shared State</p>
+          <h2>Board</h2>
+        </div>
+        <div id="status-banner" class="status-banner"></div>
+        <div id="metrics" class="metric-grid"></div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Fireworks</h3>
+          </div>
+          <div id="fireworks" class="fireworks-row"></div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Discard Pile</h3>
+          </div>
+          <div id="discard-pile" class="token-row"></div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Opponent Hand</h3>
+          </div>
+          <div id="opponent-hand" class="hand-grid"></div>
+        </div>
+      </section>
+
+      <section class="panel human-panel">
+        <div class="section-head">
+          <p class="eyebrow">Your Turn Space</p>
+          <h2>Your Hidden Hand</h2>
+        </div>
+        <div id="hint-controls" class="hint-box"></div>
+        <div id="human-hand" class="hand-grid human-hand-grid"></div>
+      </section>
+
+      <section class="panel inspector-panel">
+        <div class="section-head">
+          <p id="inspector-eyebrow" class="eyebrow">Paper Logic</p>
+          <h2 id="inspector-title">Heuristic Inspector</h2>
+        </div>
+        <div id="recommendation" class="recommendation-box"></div>
+        <div id="received-hint" class="received-hint-box"></div>
+        <div id="hint-scoring-section" class="subsection">
+          <div class="subsection-head">
+            <h3>Hint Scoring</h3>
+          </div>
+          <div id="hint-scores" class="score-list"></div>
+        </div>
+        <div id="discard-scoring-section" class="subsection">
+          <div class="subsection-head">
+            <h3>Discard Heuristic</h3>
+          </div>
+          <div id="discard-scores" class="score-list"></div>
+        </div>
+        <div id="log-section" class="subsection grow">
+          <div class="subsection-head">
+            <h3>Turn Log</h3>
+          </div>
+          <div id="turn-log" class="turn-log"></div>
+        </div>
+      </section>
+    </main>
+
+    <main id="match-layout" class="layout hidden">
+      <section class="panel board-panel">
+        <div class="section-head">
+          <p class="eyebrow">Shared State</p>
+          <h2>AI Match Board</h2>
+        </div>
+        <div id="match-status-banner" class="status-banner"></div>
+        <div id="match-metrics" class="metric-grid"></div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Fireworks</h3>
+          </div>
+          <div id="match-fireworks" class="fireworks-row"></div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Discard Pile</h3>
+          </div>
+          <div id="match-discard-pile" class="token-row"></div>
+        </div>
+      </section>
+
+      <section class="panel human-panel">
+        <div class="section-head">
+          <p class="eyebrow">Face-Up View</p>
+          <h2>AI Hands</h2>
+        </div>
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3 id="match-agent-a-name">Agent A</h3>
+          </div>
+          <div id="match-agent-a-hand" class="hand-grid human-hand-grid"></div>
+        </div>
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3 id="match-agent-b-name">Agent B</h3>
+          </div>
+          <div id="match-agent-b-hand" class="hand-grid human-hand-grid"></div>
+        </div>
+      </section>
+
+      <section class="panel inspector-panel">
+        <div class="section-head">
+          <p class="eyebrow">AI Match</p>
+          <h2>Result</h2>
+        </div>
+        <div id="match-summary" class="recommendation-box"></div>
+        <div class="subsection grow">
+          <div class="subsection-head">
+            <h3>Turn Log</h3>
+          </div>
+          <div id="match-turn-log" class="turn-log"></div>
+        </div>
+      </section>
+    </main>
+
+    <template id="metric-template">
+      <div class="metric-card">
+        <span class="metric-label"></span>
+        <strong class="metric-value"></strong>
+      </div>
+    </template>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+  </html>
