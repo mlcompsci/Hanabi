@@ -72,13 +72,22 @@ async function requestJSON(url, options = {}) {
 }
 
 async function loadState() {
-  const payload = await requestJSON("/api/state", {
-    method: "POST",
-    body: JSON.stringify({
-      session: state.session,
-    }),
-  });
-  applyPayload(payload);
+  try {
+    const payload = await requestJSON("/api/state", {
+      method: "POST",
+      body: JSON.stringify({
+        session: state.session,
+      }),
+    });
+    applyPayload(payload);
+  } catch (error) {
+    if (String(error.message).includes("404")) {
+      const payload = await requestJSON("/api/state");
+      applyPayload(payload);
+      return;
+    }
+    throw error;
+  }
 }
 
 async function startNewGame(event) {
